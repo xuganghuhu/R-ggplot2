@@ -1,0 +1,89 @@
+---
+title: "20180917_dtr_JD"
+author: "hu"
+date: "2018年9月17日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+#载入分析所需要的包
+library(dplyr)
+library(devtools)
+library(woe)   
+library(ROSE)
+library(rpart)
+library(rpart.plot)
+library(ggplot2)
+require(caret)
+library(pROC)
+```
+
+# NBA球员大合同决策树分析
+
+本次分析数据为2016-2017赛季NBA300多为球员的技术统计，联系使用决策树技术对球员合同做分类。  
+数据来源：  
+感谢简书用户“牧羊的男孩”，地址如下：   
+https://pan.baidu.com/s/1VjMGm9uzmeb5lnzPkGpD-Q  
+以下为“牧羊的男孩”提供的数据字段解释，非常感谢！   
+![](https://upload-images.jianshu.io/upload_images/6857799-e501c762be529100.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/700)
+
+## 数据准备
+
+```{r}
+dat_nba<-read.csv('nba_2017_nba_players_with_salary.csv')
+dat_nba$cut_salary<-ifelse(dat_nba$SALARY_MILLIONS>15,1,0)
+
+dat_nba$cut_salary<-as.factor(dat_nba$cut_salary)
+#dat_nba<-select(dat_nba,-PLAYER,-SALARY_MILLIONS,-TEAM)
+cat('目标变量：\n')
+summary(dat_nba$cut_salary)
+cat('\n')
+names(dat_nba)
+dat_nba[,1:30]
+#filter(dat_nba,TEAM=='GS') 检查PACE是否为作者所说的球队得分
+
+```
+
+## 球员可视化数据分析
+### 数据整理及清洗
+
+```{r}
+dat_nba1<-select(dat_nba,-X,-Rk) #去掉序号字段
+dat_nba1$cut_age<-ifelse(dat_nba1$AGE>=30,'30++',ifelse(dat_nba1$AGE>=25,'25-29','25--'))  #添加一个字段：切分老中青3个年龄段
+
+#条形图
+#ggplot(dat_nba1,aes(cut_age))+geom_bar(stat='count')   
+ggplot(dat_nba1,aes(cut_age))+geom_bar(color='black',fill='skyblue')+labs(title='AGE_bar') 
+
+#ggplot(dat_nba1,aes(cut_age,POINTS))+geom_bar(stat='identity')+coord_flip()
+ggplot(dat_nba1,aes(cut_age,POINTS))+geom_bar(stat='identity',fill='green3')+coord_flip()+labs(title='AGE_bar')
+
+#直方图
+#ggplot(dat_nba1,aes(AGE))+geom_histogram()
+ggplot(dat_nba1,aes(AGE))+geom_histogram(binwidth=1,color='black',fill='orange')+labs(title='AGE_hist') 
+
+
+```
+
+### 散点图双因素分析
+
+```{r}
+ggplot(dat_nba1,aes(MP,POINTS))+geom_point()
+ggplot(dat_nba1,aes(MP,POINTS))+geom_point()
+ggplot(dat_nba1,aes(x=MP,y=POINTS,color=cut_age))+geom_point()
+ggplot(dat_nba1,aes(x=MP,y=POINTS,color=cut_age))+geom_smooth()
+
+ggplot(dat_nba1,aes(x=MP,y=POINTS,color=cut_age))+geom_point()+geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)
+ggplot(filter(dat_nba1,POINTS>23,MP>30),aes(x=MP,y=POINTS,color=cut_age))+geom_point()+geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)
+```
+
+
+
+
+```{r}
+
+```
+
+
+
+
