@@ -1,12 +1,17 @@
 ---
-title: "20180917_dtr_JD"
+title: "20181013_NBA_ggplot2"
 author: "hu"
-date: "2018Äê9ÔÂ17ÈÕ"
+date: "2018å¹´10æœˆ13æ—¥"
 output: html_document
 ---
 
+
+# ggplot2 NBAæ•°æ®å¯è§†åŒ–
+
+Rè¯­è¨€æ•°æ®å¯è§†åŒ–ï¼š
+
 ```{r setup, include=FALSE}
-#ÔØÈë·ÖÎöËùĞèÒªµÄ°ü
+#è½½å…¥åˆ†ææ‰€éœ€è¦çš„åŒ…
 library(dplyr)
 library(devtools)
 library(woe)   
@@ -18,71 +23,146 @@ require(caret)
 library(pROC)
 ```
 
-# NBAÇòÔ±´óºÏÍ¬¾ö²ßÊ÷·ÖÎö
-
-±¾´Î·ÖÎöÊı¾İÎª2016-2017Èü¼¾NBA300¶àÎªÇòÔ±µÄ¼¼ÊõÍ³¼Æ£¬ÁªÏµÊ¹ÓÃ¾ö²ßÊ÷¼¼Êõ¶ÔÇòÔ±ºÏÍ¬×ö·ÖÀà¡£  
-Êı¾İÀ´Ô´£º  
-¸ĞĞ»¼òÊéÓÃ»§¡°ÄÁÑòµÄÄĞº¢¡±£¬µØÖ·ÈçÏÂ£º   
+æœ¬æ¬¡åˆ†ææ•°æ®ä¸º2016-2017èµ›å­£NBA300å¤šä¸ºçƒå‘˜çš„æŠ€æœ¯ç»Ÿè®¡ã€‚
+æ•°æ®æ¥æºï¼š  
+æ„Ÿè°¢ç®€ä¹¦ç”¨æˆ·â€œç‰§ç¾Šçš„ç”·å­©â€ï¼Œåœ°å€å¦‚ä¸‹ï¼š   
 https://pan.baidu.com/s/1VjMGm9uzmeb5lnzPkGpD-Q  
-ÒÔÏÂÎª¡°ÄÁÑòµÄÄĞº¢¡±Ìá¹©µÄÊı¾İ×Ö¶Î½âÊÍ£¬·Ç³£¸ĞĞ»£¡   
+ä»¥ä¸‹ä¸ºâ€œç‰§ç¾Šçš„ç”·å­©â€æä¾›çš„æ•°æ®å­—æ®µè§£é‡Šï¼Œéå¸¸æ„Ÿè°¢ï¼   
 ![](https://upload-images.jianshu.io/upload_images/6857799-e501c762be529100.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/700)
 
-## Êı¾İ×¼±¸
+## æ•°æ®å‡†å¤‡
 
 ```{r}
 dat_nba<-read.csv('nba_2017_nba_players_with_salary.csv')
-dat_nba$cut_salary<-ifelse(dat_nba$SALARY_MILLIONS>15,1,0)
-
+dat_nba$cut_salary<-ifelse(dat_nba$SALARY_MILLIONS>15,'big','normal')
 dat_nba$cut_salary<-as.factor(dat_nba$cut_salary)
 #dat_nba<-select(dat_nba,-PLAYER,-SALARY_MILLIONS,-TEAM)
-cat('Ä¿±ê±äÁ¿£º\n')
-summary(dat_nba$cut_salary)
-cat('\n')
-names(dat_nba)
-dat_nba[,1:30]
-#filter(dat_nba,TEAM=='GS') ¼ì²éPACEÊÇ·ñÎª×÷ÕßËùËµµÄÇò¶ÓµÃ·Ö
-
+#summary(dat_nba$cut_salary)
+cat('\n','å‰30ä½çƒå‘˜ï¼š')
+#names(dat_nba)
+dat_nba[1:15,]
+#filter(dat_nba,TEAM=='GS') æ£€æŸ¥PACEæ˜¯å¦ä¸ºä½œè€…æ‰€è¯´çš„çƒé˜Ÿå¾—åˆ†
 ```
 
-## ÇòÔ±¿ÉÊÓ»¯Êı¾İ·ÖÎö
-### Êı¾İÕûÀí¼°ÇåÏ´
+## çƒå‘˜å¯è§†åŒ–æ•°æ®åˆ†æ
+### ggplot2 ä½œå›¾åŸç†ç®€è¦ä¸¾ä¾‹
 
 ```{r}
-dat_nba1<-select(dat_nba,-X,-Rk) #È¥µôĞòºÅ×Ö¶Î
-dat_nba1$cut_age<-ifelse(dat_nba1$AGE>=30,'30++',ifelse(dat_nba1$AGE>=25,'25-29','25--'))  #Ìí¼ÓÒ»¸ö×Ö¶Î£ºÇĞ·ÖÀÏÖĞÇà3¸öÄêÁä¶Î
+dat_nba1<-select(dat_nba,-X,-Rk) #å»æ‰åºå·å­—æ®µ
+dat_nba1$cut_age<-ifelse(dat_nba1$AGE>=30,'30++',ifelse(dat_nba1$AGE>=25,'25-29','25--'))  #æ·»åŠ ä¸€ä¸ªå­—æ®µï¼šåˆ‡åˆ†è€ä¸­é’3ä¸ªå¹´é¾„æ®µ
 
-#ÌõĞÎÍ¼
-#ggplot(dat_nba1,aes(cut_age))+geom_bar(stat='count')   
-ggplot(dat_nba1,aes(cut_age))+geom_bar(color='black',fill='skyblue')+labs(title='AGE_bar') 
+ggplot(dat_nba1,aes(POSITION))+geom_bar() #æ¡å½¢å›¾
 
-#ggplot(dat_nba1,aes(cut_age,POINTS))+geom_bar(stat='identity')+coord_flip()
-ggplot(dat_nba1,aes(cut_age,POINTS))+geom_bar(stat='identity',fill='green3')+coord_flip()+labs(title='AGE_bar')
+ggplot(dat_nba1,aes(POSITION,POINTS))+geom_bar(stat='identity')+coord_flip() #æ¨ªå‘æ¡å½¢å›¾
 
-#Ö±·½Í¼
-#ggplot(dat_nba1,aes(AGE))+geom_histogram()
-ggplot(dat_nba1,aes(AGE))+geom_histogram(binwidth=1,color='black',fill='orange')+labs(title='AGE_hist') 
+ggplot(dat_nba1,aes(POSITION))+geom_density() #å¯†åº¦å›¾
 
+ggplot(dat_nba1,aes(MP,POINTS))+geom_point() #æ•£ç‚¹å›¾
+
+ggplot(dat_nba1,aes(MP,POINTS))+geom_dotplot() #dotå›¾
+
+ggplot(dat_nba1,aes(POSITION,POINTS))+geom_boxplot() #ç®±çº¿å›¾
+
+ggplot(dat_nba1,aes(cut_age))+geom_bar(stat='count')+coord_polar(theta = "x") #é¥¼å›¾--æ¡å½¢å›¾çš„ç‰¹æ®Šå½¢å¼
 
 ```
 
-### É¢µãÍ¼Ë«ÒòËØ·ÖÎö
+
+
+### æ¡å½¢å›¾
+```{r}
+## æ¡å½¢å›¾
+ggplot(dat_nba1,aes(POSITION))+                        
+  geom_bar(fill='skyblue2',color='black')+
+  geom_density()+
+  labs(title='Bar')
+
+#filter(dat_nba1,POSITION=='PF-C')%>%select(PLAYER,POINTS,TRB,AST,STL,BLK,TEAM,POSITION,SALARY_MILLIONS)
+
+## æ¡å½¢å›¾-æ¨ªå‘-åˆ†é¢
+ggplot(dat_nba1,aes(POSITION))+                        
+  geom_bar(fill='green3',color='black')+coord_flip()+
+  facet_grid(cut_salary~cut_age)+
+  labs(title='Bar--facet')
+
+## å¹¶ç«‹$å †å æ¡å½¢å›¾ 
+ggplot(dat_nba1,aes(cut_age,fill=POSITION))+
+  geom_bar(position = 'stack')+                        #å¹¶åˆ—dodge  å †å stack
+  labs(title='Bar--dodge')             
+
+## æ¡å½¢å›¾--é¥¼å›¾
+ggplot(dat_nba1,aes(POSITION),color=POSITION)+                        
+  geom_bar(fill='red3',color='black')+
+  labs(title='Bar--facet')+
+  facet_grid(~cut_age)+
+  coord_polar(theta = "x")
+
+## ç›´æ–¹å›¾
+ggplot(dat_nba1,aes(AGE))+
+  geom_histogram(binwidth=1,color='blue4',fill='orange2',aes(y = ..density..))+
+  stat_density(geom = 'line', position = 'identity', size = 0.5)+
+  #scale_y_continuous(limits=c(0,35),breaks =seq(0,40,5)) + 
+  #scale_x_continuous(limits=c(19,40),breaks =seq(20,40,5)) +
+  labs(title='Hist') 
+```
+
+### å¾—åˆ†æ•ˆç‡åˆ†æ
 
 ```{r}
-ggplot(dat_nba1,aes(MP,POINTS))+geom_point()
-ggplot(dat_nba1,aes(MP,POINTS))+geom_point()
-ggplot(dat_nba1,aes(x=MP,y=POINTS,color=cut_age))+geom_point()
-ggplot(dat_nba1,aes(x=MP,y=POINTS,color=cut_age))+geom_smooth()
+plot(dat_nba1$MP,dat_nba1$POINTS)
+ggplot(dat_nba1,aes(x=MP,y=POINTS))+geom_point()
 
-ggplot(dat_nba1,aes(x=MP,y=POINTS,color=cut_age))+geom_point()+geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)
-ggplot(filter(dat_nba1,POINTS>23,MP>30),aes(x=MP,y=POINTS,color=cut_age))+geom_point()+geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)
+ggplot(dat_nba1,aes(x=MP,y=POINTS,color=cut_age))+geom_point()+theme_gray()
+ggplot(dat_nba1,aes(x=MP,y=POINTS,color=cut_age))+geom_smooth()+theme_light()
+
+ggplot(dat_nba1,aes(x=MP,y=POINTS,color=cut_age))+geom_point()+geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)+theme_void()
+ggplot(filter(dat_nba1,POINTS>23,MP>30),aes(x=MP,y=POINTS,color=cut_age))+geom_point()+geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)+theme_void()
 ```
 
+### ç¯®æ¿çƒæ•ˆç‡åˆ†æ
+```{r}
+dat_nba1$rate_RB<-dat_nba1$ORB/dat_nba1$DRB   #ç”Ÿæˆç¯®æ¿ç‡çš„æŒ‡æ ‡
 
+ggplot(dat_nba1,aes(TRB,rate_RB,color=POSITION))+geom_point()+geom_smooth()   #method = 'loess',se=FALSE
 
+ggplot(dat_nba1,aes(TRB,rate_RB,color=POSITION))+geom_point()+
+  geom_text(aes(label=(PLAYER)),color='black',check_overlap = T)+
+  theme_classic()
 
+#filter(dat_nba1,PLAYER=='Mike Tobey')%>%select(PLAYER,MP,POINTS,TRB,AST,STL,BLK,TEAM,POSITION,SALARY_MILLIONS)
+```
+### ç®±çº¿å›¾
 ```{r}
 
+ggplot(dat_nba1,aes(cut_age,POINTS,fill=POSITION))+geom_boxplot()+theme_classic()   #geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)
+
+ggplot(dat_nba1,aes(cut_age,POINTS,fill=POSITION))+geom_violin(alpha=0.5)+theme_classic()
+
 ```
+
+
+### æŒ‰çƒé˜Ÿåˆ†æ
+```{r}
+dat_nba1$num<-1
+dat_grp<-group_by(dat_nba1,TEAM)%>%
+  summarise(cnt=sum(num),AVG_points=mean(POINTS),AVG_TRB=mean(TRB),AVG_AST=mean(AST),AVG_STL=mean(STL),AVG_BLK=mean(BLK),AVG_SALARY=mean(SALARY_MILLIONS))%>%
+  filter(cnt>=5)
+
+dat_grp_seed<-dat_grp[order(-dat_grp$AVG_SALARY),][1:15,]  #æ„é€ å¾—åˆ†èƒ½åŠ›æœ€å¼ºçš„10ä¸ªçƒé˜Ÿ
+dat_grp_seed
+dat_nba3<-merge(dat_nba1,dat_grp_seed,by='TEAM') #åŒ¹é…seed
+
+ggplot(dat_nba3,aes(TEAM,POINTS,fill=TEAM))+geom_boxplot()+theme_classic()
+
+ggplot(dat_nba3,aes(TEAM,POINTS,fill=TEAM))+geom_boxplot()+geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)+theme_void()
+
+ggplot(dat_nba3,aes(TEAM,TRB,fill=TEAM))+geom_boxplot()+geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)+theme_void()
+
+ggplot(dat_nba3,aes(TEAM,RPM,fill=TEAM))+geom_boxplot()+geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)+theme_void()
+
+```
+
+
 
 
 
