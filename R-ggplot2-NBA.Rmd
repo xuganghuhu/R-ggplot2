@@ -1,0 +1,230 @@
+---
+title: "20181013_NBA_ggplot2"
+author: "hu"
+date: "2018年10月13日"
+output: html_document
+---
+
+
+
+# R语言可视化：ggplot2
+## NBA数据可视化
+### 2016-2017赛季
+
+R语言数据可视化：
+
+```{r setup, include=FALSE}
+#载入分析所需要的包
+library(dplyr)
+#library(devtools)
+library(woe)   
+library(ROSE)
+library(rpart)
+library(rpart.plot)
+library(ggplot2)
+require(caret)
+library(pROC)
+```
+
+本次分析数据为2016-2017赛季NBA300多为球员的技术统计。
+数据来源：  
+感谢简书用户“牧羊的男孩”，地址如下：   
+https://pan.baidu.com/s/1VjMGm9uzmeb5lnzPkGpD-Q  
+以下为“牧羊的男孩”提供的数据字段解释，非常感谢！   
+![](https://upload-images.jianshu.io/upload_images/6857799-e501c762be529100.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/700)
+
+## 数据准备
+
+```{r}
+dat_nba<-read.csv('nba_2017_nba_players_with_salary.csv')
+dat_nba$cut_salary<-ifelse(dat_nba$SALARY_MILLIONS>15,'big','normal')
+
+cat('\n','前30位球员：')
+dat_nba[1:15,]
+#filter(dat_nba,TEAM=='GS') #检查PACE是否为作者所说的球队得分
+```
+
+## 球员可视化数据分析
+### ggplot2 作图原理简要举例
+
+```{r}
+dat_nba1<-select(dat_nba,-X,-Rk) #去掉序号字段
+dat_nba1$cut_age<-ifelse(dat_nba1$AGE>=30,'30++',ifelse(dat_nba1$AGE>=25,'25-29','25--'))  #添加一个字段：切分老中青3个年龄段
+
+ggplot(dat_nba1,aes(POSITION))+geom_bar() #条形图
+
+ggplot(dat_nba1,aes(POSITION))+geom_density() #密度图
+
+ggplot(dat_nba1,aes(MP,POINTS))+geom_point() #散点图
+
+ggplot(dat_nba1,aes(MP,POINTS))+geom_dotplot() #dot图
+
+ggplot(dat_nba1,aes(POSITION,POINTS))+geom_boxplot() #箱线图
+
+ggplot(dat_nba1,aes(POSITION,POINTS))+geom_bar(stat='identity')+coord_flip() #横向条形图
+
+ggplot(dat_nba1,aes(POSITION))+geom_bar()+coord_polar(theta = "y") #饼图--条形图的特殊形式
+
+```
+
+
+
+### 条形图
+```{r}
+## 去掉洛文吉
+dat_nba1<-filter(dat_nba1,POSITION!='PF-C')
+
+
+## 条形图
+ggplot(dat_nba1,aes(POSITION))+                        
+  geom_bar(fill='skyblue1',color='black')+
+  labs(title='Bar')
+
+## 看一下为什么有POSITION=='PF-C'
+#filter(dat_nba1,POSITION=='PF-C')%>%select(PLAYER,POINTS,TRB,AST,STL,BLK,TEAM,POSITION,SALARY_MILLIONS)
+
+
+## 条形图-横向
+ggplot(dat_nba1,aes(POSITION))+                        
+  geom_bar(fill='green4',color='black')+coord_flip()
+
+
+## 并立$堆叠条形图 
+ggplot(dat_nba1,aes(POSITION,fill=cut_age))+
+  geom_bar(position = 'dodge')+                        #并列dodge  堆叠stack
+  labs(title='Bar--dodge')             
+
+## 条形图--饼图
+ggplot(dat_nba1,aes(POSITION),color=POSITION)+                        
+  geom_bar(fill='red3',color='black')+
+  labs(title='Bar--facet')+
+  facet_grid(cut_salary~cut_age)+
+  coord_polar(theta = "x")
+
+## 直方图
+ggplot(dat_nba1,aes(AGE))+
+  geom_histogram(binwidth=1,color='blue4',fill='orange2',aes(y = ..density..))+
+  stat_density(geom = 'line', position = 'identity', size = 0.5)+
+  #scale_y_continuous(limits=c(0,35),breaks =seq(0,40,5)) + 
+  #scale_x_continuous(limits=c(19,40),breaks =seq(20,40,5)) +
+  labs(title='Hist') 
+```
+
+### 得分效率分析
+
+```{r}
+plot(dat_nba1$MP,dat_nba1$POINTS)
+ggplot(dat_nba1,aes(x=MP,y=POINTS))+geom_point()
+
+ggplot(dat_nba1,aes(x=MP,y=POINTS,color=cut_age))+geom_point()+theme_classic()
+ggplot(dat_nba1,aes(x=MP,y=POINTS,color=cut_age))+geom_smooth()+theme_light()
+
+#上场时间与场均得分
+ggplot(dat_nba1,aes(x=MP,y=POINTS,color=cut_age))+geom_point()+
+  #stat_smooth()+
+  geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)+
+  theme_classic()
+
+#局部放大
+#ggplot(filter(dat_nba1,POINTS>23,MP>30),aes(x=MP,y=POINTS,color=cut_age))+geom_point()+geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)+theme_void()
+
+
+#工资与场均得分
+ggplot(filter(dat_nba1),aes(x=SALARY_MILLIONS,y=POINTS,color=cut_age))+geom_point()+
+  #stat_smooth()+
+  geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)+
+  theme_classic()
+
+#年龄与场均得分
+ggplot(dat_nba1,aes(x=AGE,y=POINTS,color=cut_salary))+geom_point()+
+  #stat_smooth()+
+  #geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)+
+  theme_classic()
+
+```
+
+### 篮板球效率分析
+```{r}
+dat_nba1$rate_RB<-dat_nba1$ORB/dat_nba1$DRB   #生成篮板率的指标
+
+#ggplot(dat_nba1,aes(TRB,rate_RB,color=POSITION))+geom_point()+geom_smooth()   #method = 'loess',se=FALSE
+
+# 前场篮板和后场篮板
+ggplot(dat_nba1,aes(DRB,ORB,color=cut_age))+geom_point()+
+  #stat_smooth()+
+  #geom_text(aes(label=(PLAYER)),color='black',check_overlap = T)+
+  theme_classic()
+
+# 工资与篮板球
+ggplot(dat_nba1,aes(SALARY_MILLIONS,TRB,color=cut_age))+geom_point()+
+  #stat_smooth()+
+  #geom_text(aes(label=(PLAYER)),color='black',check_overlap = T)+
+  theme_classic()
+
+#total篮板球与篮板率
+ggplot(dat_nba1,aes(TRB,rate_RB,color=POSITION))+geom_point()+
+  #stat_smooth()+
+  #geom_text(aes(label=(PLAYER)),color='black',check_overlap = T)+
+  theme_classic()
+
+
+#filter(dat_nba1,PLAYER=='Mike Tobey')%>%select(PLAYER,MP,POINTS,ORB,DRB,TRB,AST,STL,BLK,TEAM,POSITION,SALARY_MILLIONS)
+```
+### 箱线图
+```{r}
+
+ggplot(dat_nba1,aes(cut_age,POINTS,fill=POSITION))+geom_boxplot()+theme_classic()   #geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)
+
+ggplot(dat_nba1,aes(cut_age,POINTS,fill=POSITION))+geom_violin(alpha=0.5)+theme_classic()
+
+```
+
+
+### 按球队分析
+```{r}
+dat_nba1$num<-1
+dat_grp<-group_by(dat_nba1,TEAM)%>%
+  summarise(cnt=sum(num),AVG_points=mean(POINTS),AVG_TRB=mean(TRB),AVG_AST=mean(AST),AVG_STL=mean(STL),AVG_BLK=mean(BLK),AVG_SALARY=mean(SALARY_MILLIONS))%>%
+  filter(cnt>=5)
+
+dat_grp_seed<-dat_grp[order(-dat_grp$AVG_SALARY),][1:15,]  #构造得分能力最强的10个球队
+dat_grp_seed
+dat_nba3<-merge(dat_nba1,dat_grp_seed,by='TEAM') #匹配seed
+
+
+#可以观测的能力值：MP,POINTS,TRB,AST,STL,BLK,TEAM,POSITION,SALARY_MILLIONS
+
+ggplot(dat_nba3,aes(TEAM,POINTS,fill=TEAM))+geom_boxplot()+
+  geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)+
+  #theme_light()
+  theme_void()
+
+ggplot(dat_nba3,aes(TEAM,TRB,fill=TEAM))+geom_boxplot()+
+  #geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)+
+  theme_light()
+  #theme_void()
+
+ggplot(dat_nba3,aes(TEAM,AST,fill=TEAM))+geom_boxplot()+
+  #geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)+
+  theme_light()
+  #theme_void()
+
+ggplot(dat_nba3,aes(TEAM,RPM,fill=TEAM))+geom_boxplot()+
+  #geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)+
+  theme_light()
+  #theme_void()
+
+ggplot(dat_nba3,aes(TEAM,SALARY_MILLIONS,fill=TEAM))+geom_boxplot()+
+  geom_text(aes(label=PLAYER),color='black',check_overlap = TRUE)+
+  #theme_light()
+  theme_void()
+
+#filter(dat_nba3,TEAM=='OKC')%>%select(PLAYER,SALARY_MILLIONS)
+
+```
+
+
+
+
+
+
