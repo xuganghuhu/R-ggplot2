@@ -11,7 +11,7 @@ pic1:
 ![](https://github.com/xuganghuhu/R-ggplot2/blob/master/1.png)
 
 pic2:  
-文艺R语言作图（ggplot2）
+文艺R语言作图（ggplot2）  
 ![](https://github.com/xuganghuhu/R-ggplot2/blob/master/2.png)
 
 pic3:  
