@@ -7,7 +7,7 @@
 结合多年看球经验，用可视化的方式探寻隐藏在数据中的奥秘~
 
 pic1:  
-普通R语言作图
+普通R语言作图  
 ![](https://github.com/xuganghuhu/R-ggplot2/blob/master/1.png)
 
 pic2:  
